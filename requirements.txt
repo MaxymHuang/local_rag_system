@@ -3,3 +3,7 @@ sentence-transformers
 numpy
 faiss-cpu
 python-dotenv
+ollama
+python-docx
+PyPDF2
+python-pptx

@@ -38,7 +38,8 @@ pip install -r requirements.txt
 
 1. Run the script:
 ```powershell
-python file_finder.py
+python file_finder.py 
+# add --root-dir "path/to/directory" to specify root directory
 ```
 
 2. The system will first build an index of your file system (this may take a few moments depending on the size of your directory).
