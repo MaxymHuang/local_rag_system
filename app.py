@@ -65,6 +65,93 @@ def test_ollama():
         'message': response
     })
 
+@app.route('/test-ollama-custom', methods=['POST'])
+def test_ollama_custom():
+    """Test endpoint for custom Ollama connection."""
+    data = request.json
+    url = data.get('url', 'http://localhost:11434')
+    model = data.get('model', 'llama3.1:8b')
+    
+    try:
+        # Test connection to custom URL
+        import requests
+        response = requests.get(f"{url}/api/tags", timeout=10)
+        if response.status_code != 200:
+            return jsonify({
+                'status': 'error',
+                'message': f'Server returned status code {response.status_code}'
+            })
+        
+        # Test model availability
+        try:
+            import ollama
+            # Temporarily configure ollama client for this test
+            test_response = ollama.chat(
+                model=model,
+                messages=[{
+                    'role': 'user',
+                    'content': 'hello'
+                }],
+                options={'host': url}
+            )
+            
+            # Extract content from response
+            try:
+                if hasattr(test_response, 'message'):
+                    msg = test_response.message
+                elif isinstance(test_response, dict) and 'message' in test_response:
+                    msg = test_response['message']
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'No message found in response'
+                    })
+                
+                if hasattr(msg, 'content'):
+                    content = msg.content
+                elif isinstance(msg, dict) and 'content' in msg:
+                    content = msg['content']
+                elif isinstance(msg, str):
+                    content = msg
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Message object missing content'
+                    })
+                    
+                return jsonify({
+                    'status': 'success',
+                    'message': f'Connection successful! Model {model} is working.'
+                })
+                
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Failed to parse response: {str(e)}'
+                })
+                
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': f'Model test failed: {str(e)}'
+            })
+            
+    except requests.exceptions.ConnectionError:
+        return jsonify({
+            'status': 'error',
+            'message': f'Could not connect to {url}. Make sure Ollama is running.'
+        })
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'status': 'error',
+            'message': f'Connection to {url} timed out.'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Connection error: {str(e)}'
+        })
+
 @app.route('/status', methods=['GET'])
 def status():
     global rag, current_root_dir
