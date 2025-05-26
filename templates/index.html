@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Finder RAG System</title>
+    <title>File Finder Pro MAAAAX</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
@@ -257,8 +257,8 @@
         
         .help-button {
             position: fixed;
-            top: 2rem;
-            right: 2rem;
+            bottom: 2rem;
+            left: 6rem;
             z-index: 200;
             background: white;
             color: black;
@@ -281,8 +281,8 @@
         
         .help-bubble {
             position: fixed;
-            top: 5rem;
-            right: 2rem;
+            bottom: 8rem;
+            left: 2rem;
             z-index: 150;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -313,13 +313,13 @@
         .help-bubble::before {
             content: '';
             position: absolute;
-            top: -8px;
-            right: 20px;
+            bottom: -8px;
+            left: 20px;
             width: 0;
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-bottom: 8px solid rgba(255, 255, 255, 0.95);
+            border-top: 8px solid rgba(255, 255, 255, 0.95);
         }
         
         .help-close {
@@ -655,7 +655,7 @@
         <div class="text-center mb-12">
             <h1 class="text-5xl font-bold mb-4 header-title">
                 <i class="fas fa-search mr-4"></i>
-                File Finder RAG System
+                File Finder Pro MAAAAX
             </h1>
             <p class="text-white text-lg opacity-90">Intelligent file search and summarization powered by AI</p>
         </div>
@@ -816,11 +816,15 @@
                 </div>
                 <div class="flex items-start space-x-2">
                     <span class="font-bold text-blue-500">3.</span>
-                    <span><strong>Summarize:</strong> Click "Summarize" on any file to get an AI-generated summary</span>
+                    <span><strong>Summarize:</strong> Click "Summarize" on any file to get an AI-generated summary (can be disabled in settings)</span>
                 </div>
                 <div class="flex items-start space-x-2">
                     <span class="font-bold text-blue-500">4.</span>
                     <span><strong>Chat:</strong> Use the chat box to ask questions or get help from Ollama AI</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-bold text-blue-500">5.</span>
+                    <span><strong>Settings:</strong> Configure Ollama server, model, and toggle AI features on/off</span>
                 </div>
             </div>
             <div class="mt-4 p-2 bg-blue-50 rounded-lg">
@@ -872,6 +876,23 @@
                     <p class="text-xs text-gray-500 mt-1">
                         The Ollama model to use for AI responses
                     </p>
+                </div>
+                
+                <div>
+                    <label class="flex items-center space-x-3">
+                        <input type="checkbox" id="enableSummarize" 
+                               class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
+                               checked>
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-magic mr-2"></i>
+                                Enable AI Summarization
+                            </span>
+                            <p class="text-xs text-gray-500">
+                                Show summarize buttons and enable chat functionality
+                            </p>
+                        </div>
+                    </label>
                 </div>
                 
                 <div class="flex gap-3">
@@ -928,7 +949,7 @@
                     </div>
                     <div>
                         <h3 class="text-xl font-semibold text-gray-800">Maxym</h3>
-                        <p class="text-gray-600">Developer & AI Enthusiast</p>
+                        <p class="text-gray-600">Certified Vibe Coder</p>
                     </div>
                 </div>
                 
@@ -938,16 +959,18 @@
                         About This Project
                     </h4>
                     <p class="text-sm text-blue-700">
-                        This File Finder RAG System was built to demonstrate the power of combining 
-                        semantic search with local AI models. It showcases modern web development 
-                        practices with a focus on user experience and AI integration.
+                        This File Finder RAG System was built originally for solving a headache at work.
+                        There was a huge network file system at work that was a pain to navigate, and everything
+                        was poorly organized. I thought it would be nice to have a way to search for files across the network without having to know the exact path
+                        and without having to search through folders and folders of documents. From there, I thought it would be even better if this could connect to an AI agent
+                        that summarizes the files for me, that way I don't even have to open the file to get the gist of it.
                     </p>
                 </div>
                 
                 <div class="space-y-3">
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-code text-blue-500"></i>
-                        <span class="text-sm">Built with Python, Flask, and modern web technologies</span>
+                        <span class="text-sm">Built with Python, Flask, and AI generation (I'm not even going to lie to you)</span>
                     </div>
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-robot text-green-500"></i>
@@ -1128,14 +1151,48 @@
             // Load settings from localStorage or use defaults
             const savedUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
             const savedModel = localStorage.getItem('ollamaModel') || 'llama3.1:8b';
+            const savedEnableSummarize = localStorage.getItem('enableSummarize');
             
             document.getElementById('ollamaUrl').value = savedUrl;
             document.getElementById('ollamaModel').value = savedModel;
+            
+            // Default to enabled if not set
+            const enableSummarize = savedEnableSummarize !== null ? savedEnableSummarize === 'true' : true;
+            document.getElementById('enableSummarize').checked = enableSummarize;
+            
+            // Update UI based on setting
+            updateSummarizeUI(enableSummarize);
+        }
+
+        function updateSummarizeUI(enabled) {
+            // Show/hide summarize buttons in search results
+            const summarizeButtons = document.querySelectorAll('.summarize-btn');
+            summarizeButtons.forEach(btn => {
+                btn.style.display = enabled ? 'inline-flex' : 'none';
+            });
+            
+            // Show/hide chat section
+            const chatbox = document.getElementById('chatbox');
+            if (chatbox) {
+                if (enabled) {
+                    chatbox.classList.remove('hidden');
+                } else {
+                    chatbox.classList.add('hidden');
+                }
+            }
+            
+            // Update any existing search results
+            const results = window.lastSearchResults || [];
+            if (results.length > 0) {
+                // Re-render search results to apply the new setting
+                displayResults(results);
+            }
         }
 
         function saveSettings() {
             const url = document.getElementById('ollamaUrl').value.trim();
             const model = document.getElementById('ollamaModel').value.trim();
+            const enableSummarize = document.getElementById('enableSummarize').checked;
             
             if (!url) {
                 showNotification('Please enter a valid Ollama server URL', 'error');
@@ -1150,6 +1207,10 @@
             // Save to localStorage
             localStorage.setItem('ollamaUrl', url);
             localStorage.setItem('ollamaModel', model);
+            localStorage.setItem('enableSummarize', enableSummarize);
+            
+            // Update UI based on summarize setting
+            updateSummarizeUI(enableSummarize);
             
             showNotification('Settings saved successfully!', 'success');
             
@@ -1417,12 +1478,27 @@
             const resultsList = document.getElementById('resultsList');
             resultsList.innerHTML = '';
             
+            // Store results for later use
+            window.lastSearchResults = results;
+            
+            // Check if summarize is enabled
+            const enableSummarize = localStorage.getItem('enableSummarize') !== 'false';
+            
             results.forEach((result, index) => {
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'result-card glass-card-dark rounded-xl p-6 hover:bg-white hover:bg-opacity-10 cursor-pointer slide-in';
                 resultDiv.style.animationDelay = `${index * 0.1}s`;
                 
                 const escapedPath = encodeURIComponent(result.path);
+                
+                // Build summarize button HTML conditionally
+                const summarizeButtonHTML = enableSummarize ? `
+                    <button onclick="summarizeFile('${escapedPath}')" 
+                            class="summarize-btn btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 ml-4">
+                        <i class="fas fa-magic"></i>
+                        <span>Summarize</span>
+                    </button>
+                ` : '';
                 
                 resultDiv.innerHTML = `
                     <div class="flex justify-between items-start">
@@ -1437,11 +1513,7 @@
                                 <span class="text-white text-sm">Relevance: ${result.relevance_score.toFixed(2)}</span>
                             </div>
                         </div>
-                        <button onclick="summarizeFile('${escapedPath}')" 
-                                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 ml-4">
-                            <i class="fas fa-magic"></i>
-                            <span>Summarize</span>
-                        </button>
+                        ${summarizeButtonHTML}
                     </div>
                 `;
                 resultsList.appendChild(resultDiv);
@@ -1677,6 +1749,9 @@
                     }
                 });
             }
+            
+            // Load settings on page load
+            loadCurrentSettings();
         });
     </script>
 </body>
