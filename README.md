@@ -49,6 +49,30 @@ A powerful file search and summarization system that uses RAG (Retrieval-Augment
 
 ## Installation
 
+### Option 1: Docker Deployment (Recommended)
+
+**Quick Start:**
+```bash
+git clone <repository-url>
+cd local_rag_system
+mkdir -p data files
+docker-compose up -d
+```
+
+The Docker setup includes:
+- ✅ **Complete environment** with all dependencies
+- ✅ **Automatic Ollama setup** with model download
+- ✅ **Production-ready configuration** options
+- ✅ **Easy scaling** and management
+
+**Access the application:**
+- Web Interface: http://localhost:5000
+- Ollama API: http://localhost:11434
+
+For detailed Docker deployment instructions, see [docker-deployment.md](docker-deployment.md).
+
+### Option 2: Manual Installation
+
 1. **Clone the repository:**
 ```bash
 git clone <repository-url>
@@ -74,6 +98,19 @@ ollama pull llama3.1:8b
 
 ### Starting the System
 
+#### Docker (Recommended)
+```bash
+# Start all services
+docker-compose up -d
+
+# Monitor startup (first time will download models)
+docker-compose logs -f
+
+# Check service status
+docker-compose ps
+```
+
+#### Manual Setup
 1. **Start the Flask server:**
 ```bash
 python app.py
@@ -279,12 +316,17 @@ POST /summarize
 ### Project Structure
 ```
 local_rag_system/
-├── app.py              # Flask web server
-├── file_finder.py      # Core RAG functionality
-├── requirements.txt    # Python dependencies
+├── app.py                    # Flask web server
+├── file_finder.py            # Core RAG functionality
+├── requirements.txt          # Python dependencies
 ├── templates/
-│   └── index.html     # Web interface
-└── README.md          # This file
+│   └── index.html           # Web interface
+├── Dockerfile               # Docker container definition
+├── docker-compose.yml       # Development Docker setup
+├── docker-compose.prod.yml  # Production Docker setup
+├── nginx.conf               # Nginx reverse proxy config
+├── docker-deployment.md     # Docker deployment guide
+└── README.md               # This file
 ```
 
 ### Key Components

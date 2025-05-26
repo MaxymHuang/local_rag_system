@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # File Finder RAG System
+  rag-system:
+    build: .
+    container_name: file-finder-rag
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./files:/app/files  # Mount your files directory here
+    environment:
+      - FLASK_ENV=production
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.1:8b
+    depends_on:
+      - ollama
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Ollama Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-server
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_ORIGINS=*
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Ollama Model Initialization (runs once to pull the model)
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    depends_on:
+      - ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - rag-network
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama server to be ready...' &&
+        sleep 30 &&
+        ollama pull llama3.1:8b &&
+        echo 'Model llama3.1:8b pulled successfully!'
+      "
+    restart: "no"
+
+volumes:
+  ollama-data:
+    driver: local
+
+networks:
+  rag-network:
+    driver: bridge 
