@@ -7,3 +7,5 @@ ollama
 python-docx
 PyPDF2
 python-pptx
+flask
+flask-cors

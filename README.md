@@ -1,101 +1,106 @@
-# Local RAG File Finder
+# File Finder RAG System
 
-This is a local Retrieval Augmented Generation (RAG) system that helps you find files and directories using natural language queries. The system uses sentence embeddings and FAISS for efficient similarity search.
+A powerful file search and summarization system that uses RAG (Retrieval-Augmented Generation) to help you find and understand files in your system. The system features a modern web interface and supports multiple concurrent users.
 
 ## Features
 
-- Natural language search for files and directories
-- Semantic understanding of file and directory descriptions
-- Relevance scoring for search results
-- Interactive command-line interface
-- Windows-compatible path handling
-- Error handling for Windows-specific issues
+- 🔍 Semantic file search using natural language queries
+- 📝 Automatic file summarization using local LLM (Ollama)
+- 🌐 Web-based interface accessible from any device on your network
+- 👥 Support for multiple concurrent users
+- 📄 Support for various file types:
+  - Text files
+  - PDF documents
+  - Word documents (.docx)
+  - PowerPoint presentations (.pptx)
+- 🔒 Thread-safe operations for multi-user environments
 
-## Setup
+## Prerequisites
 
-1. Create a virtual environment (recommended):
+- Python 3.8 or higher
+- Ollama server running locally with a compatible model
+- Required Python packages (listed in requirements.txt)
 
-   **Option 1 - Using PowerShell:**
-   ```powershell
-   python -m venv venv
-   # If you get an execution policy error, run this first:
-   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-   .\venv\Scripts\activate
-   ```
+## Installation
 
-   **Option 2 - Using Command Prompt:**
-   ```cmd
-   python -m venv venv
-   venv\Scripts\activate.bat
-   ```
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd local_rag_system
+```
 
-2. Install dependencies:
-```powershell
+2. Install the required packages:
+```bash
 pip install -r requirements.txt
 ```
 
+3. Make sure Ollama is running with your preferred model. The system is configured to use the model ID "1d35e3661de3" by default.
+
 ## Usage
 
-1. Run the script:
-```powershell
-python file_finder.py 
-# add --root-dir "path/to/directory" to specify root directory
+1. Start the Flask server:
+```bash
+python app.py
 ```
 
-2. The system will first build an index of your file system (this may take a few moments depending on the size of your directory).
+2. Access the web interface:
+   - On the same machine: `http://localhost:5000`
+   - From other devices on the network: `http://<your-ip-address>:5000`
 
-3. Once the index is built, you can enter natural language queries to find files and directories. For example:
-   - "Find all Python files"
-   - "Show me directories containing documentation"
-   - "Where are the configuration files?"
+3. Using the interface:
+   - Initialize the system by providing a root directory path
+   - Wait for the initialization to complete
+   - Enter your search query in natural language
+   - View search results with relevance scores
+   - Click "Summarize" on any file to generate a summary
 
-4. Type 'quit' to exit the program.
+## Multi-User Support
 
-## Windows-Specific Notes
+The system supports multiple concurrent users with the following features:
+- Real-time system status updates
+- Thread-safe initialization
+- Shared index for efficient resource usage
+- Visual indicators for system state
+- Automatic status checks every 5 seconds
 
-- The system uses Windows-style path separators
-- Hidden files and directories (starting with '.') are automatically skipped
-- Long file paths are supported
-- The system handles Windows-specific file system errors gracefully
+## API Endpoints
 
-### PowerShell Execution Policy
+- `GET /`: Web interface
+- `GET /status`: Check system status
+- `POST /initialize`: Initialize the system with a root directory
+- `POST /search`: Search for files using a query
+- `POST /summarize`: Generate a summary for a specific file
 
-If you encounter a PowerShell execution policy error when activating the virtual environment, you have two options:
+## Security Considerations
 
-1. **Temporary Solution** (recommended):
-   ```powershell
-   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-   .\venv\Scripts\activate
-   ```
-
-2. **Alternative Solution**:
-   - Use Command Prompt (cmd.exe) instead of PowerShell
-   - Run: `venv\Scripts\activate.bat`
-
-## How it Works
-
-1. The system creates a semantic index of your file system by:
-   - Walking through all directories and files
-   - Generating descriptions for each file and directory
-   - Creating embeddings using the SentenceTransformer model
-
-2. When you search:
-   - Your query is converted to an embedding
-   - The system finds the most similar file/directory descriptions
-   - Results are ranked by relevance score
-
-## Requirements
-
-- Windows 10 or later
-- Python 3.7+
-- Dependencies listed in requirements.txt
+1. The system is accessible to all devices on your local network
+2. For production use:
+   - Set `debug=False` in app.py
+   - Implement proper authentication
+   - Configure your firewall to allow access to port 5000
+   - Consider using HTTPS for secure communication
 
 ## Troubleshooting
 
-If you encounter any issues:
+1. If you can't connect to the Ollama server:
+   - Ensure Ollama is running
+   - Check if the model ID is correct
+   - Verify the Ollama server URL (default: http://localhost:11434)
 
-1. Make sure you're running the script from a directory with appropriate permissions
-2. Check that your Python environment is properly activated
-3. Verify that all dependencies are installed correctly
-4. If you get path-related errors, try using absolute paths instead of relative paths
-5. If you get PowerShell execution policy errors, see the "PowerShell Execution Policy" section above 
+2. If initialization fails:
+   - Check if the directory path is valid
+   - Ensure you have read permissions for the directory
+   - Check if another user is currently initializing the system
+
+3. If search results are not as expected:
+   - Try rephrasing your query
+   - Check if the file types are supported
+   - Verify that the files are readable
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 
