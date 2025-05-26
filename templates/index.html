@@ -26,6 +26,11 @@
             border-radius: 8px;
             text-align: center;
         }
+        .word-count {
+            font-size: 0.875rem;
+            color: #6B7280;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -42,20 +47,36 @@
                         class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     Initialize
                 </button>
+                <button onclick="testOllama()" 
+                        class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Test Ollama
+                </button>
             </div>
             <div id="systemStatus" class="mt-4 text-sm text-gray-600"></div>
+            <div id="ollamaStatus" class="mt-2 text-sm text-gray-600"></div>
         </div>
 
         <!-- Search Section -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold mb-4">Search Files</h2>
-            <div class="flex gap-4">
-                <input type="text" id="searchQuery" placeholder="Enter your search query" 
-                       class="flex-1 p-2 border rounded">
-                <button onclick="searchFiles()" 
-                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                    Search
-                </button>
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-4">
+                    <input type="text" id="searchQuery" placeholder="Enter your search query" 
+                           class="flex-1 p-2 border rounded">
+                    <button onclick="searchFiles()" 
+                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                        Search
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="numResults" class="text-sm text-gray-600">Number of results:</label>
+                    <select id="numResults" class="p-2 border rounded">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -69,6 +90,7 @@
         <div id="summary" class="bg-white rounded-lg shadow-md p-6 hidden">
             <h2 class="text-xl font-semibold mb-4">File Summary</h2>
             <div id="summaryContent" class="prose max-w-none"></div>
+            <div id="wordCount" class="word-count"></div>
         </div>
     </div>
 
@@ -83,6 +105,7 @@
     <script>
         let currentResults = [];
         let statusCheckInterval;
+        let ollamaTestPassed = false;
 
         function showLoading(message = 'Processing...') {
             document.getElementById('loadingText').textContent = message;
@@ -91,6 +114,54 @@
 
         function hideLoading() {
             document.getElementById('loading').style.display = 'none';
+        }
+
+        function countWords(text) {
+            return text.trim().split(/\s+/).length;
+        }
+
+        async function testOllama() {
+            showLoading('Testing Ollama connection...');
+            const ollamaStatus = document.getElementById('ollamaStatus');
+            
+            try {
+                const response = await fetch('/test-ollama');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    ollamaTestPassed = true;
+                    ollamaStatus.innerHTML = `
+                        <div class="flex items-center text-green-600">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Ollama connection successful
+                        </div>
+                    `;
+                } else {
+                    ollamaTestPassed = false;
+                    ollamaStatus.innerHTML = `
+                        <div class="flex items-center text-red-600">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                            Ollama connection failed: ${data.message}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                ollamaTestPassed = false;
+                ollamaStatus.innerHTML = `
+                    <div class="flex items-center text-red-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        Ollama connection failed: ${error}
+                    </div>
+                `;
+            } finally {
+                hideLoading();
+            }
         }
 
         // Check system status periodically
@@ -127,6 +198,7 @@
         // Start checking status when page loads
         window.onload = function() {
             checkSystemStatus();
+            testOllama(); // Test Ollama on page load
             statusCheckInterval = setInterval(checkSystemStatus, 5000); // Check every 5 seconds
         };
 
@@ -164,6 +236,8 @@
 
         async function searchFiles() {
             const query = document.getElementById('searchQuery').value;
+            const numResults = parseInt(document.getElementById('numResults').value);
+            
             if (!query) {
                 alert('Please enter a search query');
                 return;
@@ -183,7 +257,10 @@
                 const response = await fetch('/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
+                    body: JSON.stringify({ 
+                        query,
+                        num_results: numResults
+                    })
                 });
                 
                 const data = await response.json();
@@ -208,14 +285,19 @@
             results.forEach((result, index) => {
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'border rounded p-4 hover:bg-gray-50 cursor-pointer';
+                // Escape the file path for HTML and ensure it's properly encoded
+                const escapedPath = encodeURIComponent(result.path);
+                console.log('Original path:', result.path); // Debug log
+                console.log('Escaped path:', escapedPath); // Debug log
+                
                 resultDiv.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
                             <h3 class="font-semibold">${result.description}</h3>
-                            <p class="text-sm text-gray-600">${result.path}</p>
+                            <p class="text-sm text-gray-600 break-all">${result.path}</p>
                             <p class="text-sm text-gray-500">Relevance: ${result.relevance_score.toFixed(2)}</p>
                         </div>
-                        <button onclick="summarizeFile('${result.path}')" 
+                        <button onclick="summarizeFile('${escapedPath}')" 
                                 class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
                             Summarize
                         </button>
@@ -228,27 +310,53 @@
         }
 
         async function summarizeFile(filePath) {
+            if (!ollamaTestPassed) {
+                const shouldTest = confirm('Ollama connection not tested. Would you like to test it now?');
+                if (shouldTest) {
+                    await testOllama();
+                    if (!ollamaTestPassed) {
+                        alert('Cannot summarize: Ollama connection failed. Please check your Ollama server.');
+                        return;
+                    }
+                } else {
+                    alert('Cannot summarize: Ollama connection not verified.');
+                    return;
+                }
+            }
+
+            // Decode the file path
+            const decodedPath = decodeURIComponent(filePath);
+            console.log('Decoded file path:', decodedPath); // Debug log
             showLoading('Generating summary...');
             
             try {
                 const response = await fetch('/summarize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ file_path: filePath })
+                    body: JSON.stringify({ file_path: decodedPath })
                 });
                 
                 const data = await response.json();
+                console.log('Summary response:', data); // Debug log
+                
                 if (data.status === 'success') {
                     const summaryDiv = document.getElementById('summary');
                     const summaryContent = document.getElementById('summaryContent');
+                    const wordCountDiv = document.getElementById('wordCount');
+                    
                     summaryContent.textContent = data.summary;
+                    const words = countWords(data.summary);
+                    wordCountDiv.textContent = `Word count: ${words} words`;
+                    
                     summaryDiv.classList.remove('hidden');
                     summaryDiv.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    alert('Error: ' + data.message);
+                    // Show more detailed error message
+                    alert(`Error: ${data.message}\n\nFile path: ${decodedPath}`);
                 }
             } catch (error) {
-                alert('Error generating summary: ' + error);
+                console.error('Error during summarization:', error); // Debug log
+                alert(`Error generating summary: ${error}\n\nFile path: ${decodedPath}`);
             } finally {
                 hideLoading();
             }

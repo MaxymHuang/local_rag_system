@@ -34,7 +34,7 @@ cd local_rag_system
 pip install -r requirements.txt
 ```
 
-3. Make sure Ollama is running with your preferred model. The system is configured to use the model ID "1d35e3661de3" by default.
+3. Make sure Ollama is running with your preferred model. 
 
 ## Usage
 

@@ -38,7 +38,7 @@ class FileSystemRAG:
         
         # Configure Ollama client
         self.ollama_host = ollama_host
-        self.ollama_model = "hf.co/bartowski/Dolphin3.0-Llama3.2-3B-GGUF:Q4_K_M"  # Full model name
+        self.ollama_model = "hf.co/bartowski/Dolphin3.0-Llama3.2-3B-GGUF:Q4_K_M"  # Changed to standard Ollama model name
         
         # Test Ollama connection
         try:
@@ -105,17 +105,35 @@ class FileSystemRAG:
     
     def summarize_file(self, file_path: str) -> str:
         """Summarize a file using Ollama."""
+        print(f"\nDebug: Attempting to summarize file: {file_path}")
+        
         if not os.path.isfile(file_path):
+            print("Debug: Not a valid file")
             return "Not a file - cannot be summarized"
             
+        # Check if Ollama server is available
+        try:
+            print(f"Debug: Checking Ollama server at {self.ollama_host}")
+            response = requests.get(f"{self.ollama_host}/api/tags")
+            if response.status_code != 200:
+                print(f"Debug: Ollama server returned status code {response.status_code}")
+                return f"Error: Ollama server returned status code {response.status_code}. Please ensure Ollama is running."
+            print("Debug: Ollama server is available")
+        except requests.exceptions.ConnectionError:
+            print(f"Debug: Could not connect to Ollama server")
+            return f"Error: Could not connect to Ollama server at {self.ollama_host}. Please ensure Ollama is running."
+            
         content = self._read_file_contents(file_path)
+        print(f"Debug: File content length: {len(content)} characters")
         if content.startswith("Error") or content.startswith("Binary"):
+            print(f"Debug: File content indicates error or binary file")
             return content
             
         try:
             # Get file type for context
             file_type = Path(file_path).suffix.lower()
             file_name = Path(file_path).name
+            print(f"Debug: Processing {file_type} file: {file_name}")
             
             # Prepare context-aware prompt
             if file_type == '.pdf':
@@ -127,14 +145,18 @@ class FileSystemRAG:
             else:
                 context = "file"
                 
-            prompt = f"""Please provide a concise summary of this {context} named '{file_name}':
+            # Increase content length limit to 8000 characters
+            prompt = f"""Please provide a concise summary of this {context} named '{file_name}'. 
+IMPORTANT: Your response must be 600 words or less.
 
-{content[:4000]}  # Limit content length
+{content[:8000]}  # Increased content length limit
 
-Focus on the main content and key points."""
+Focus on the main content and key points. Keep your summary under 600 words."""
             
+            print(f"Debug: Using Ollama model: {self.ollama_model}")
             # Use Ollama to generate a summary
             try:
+                print("Debug: Sending request to Ollama")
                 response = ollama.chat(
                     model=self.ollama_model,
                     messages=[{
@@ -142,12 +164,32 @@ Focus on the main content and key points."""
                         'content': prompt
                     }]
                 )
-                return response['message']['content']
+                print("Debug: Received response from Ollama")
+                
+                # Check if response has the expected format
+                if not isinstance(response, dict) or 'message' not in response or 'content' not in response['message']:
+                    print(f"Debug: Unexpected response format: {response}")
+                    return "Error: Unexpected response format from Ollama server"
+                
+                # Get the response content
+                summary = response['message']['content']
+                
+                # Count words and truncate if necessary
+                words = summary.split()
+                if len(words) > 600:
+                    print(f"Debug: Truncating summary from {len(words)} to 600 words")
+                    summary = ' '.join(words[:600]) + "..."
+                
+                return summary
+                
             except requests.exceptions.ConnectionError:
-                return f"Error: Could not connect to Ollama server at {self.ollama_host}. Make sure Ollama is running."
+                print("Debug: Lost connection to Ollama during chat")
+                return f"Error: Lost connection to Ollama server. Please ensure Ollama is running."
             except Exception as e:
+                print(f"Debug: Error during Ollama chat: {str(e)}")
                 return f"Error generating summary: {str(e)}"
         except Exception as e:
+            print(f"Debug: Error in summarize_file: {str(e)}")
             return f"Error generating summary: {str(e)}"
     
     def build_index(self):
@@ -211,7 +253,7 @@ Focus on the main content and key points."""
             print(f"Error building index: {str(e)}")
             raise
     
-    def search(self, query: str, k: int = 5) -> List[Dict[str, str]]:
+    def search(self, query: str, k: int = 10) -> List[Dict[str, str]]:
         """Search for files/directories based on natural language query."""
         if self.index is None:
             raise ValueError("Index not built. Call build_index() first.")
@@ -241,8 +283,10 @@ def main():
                       help='Root directory to search in (default: current directory)')
     parser.add_argument('--ollama-host', type=str, default='http://localhost:11434',
                       help='Ollama server host (default: http://localhost:11434)')
-    parser.add_argument('--ollama-model', type=str, default='1d35e3661de3',
-                      help='Ollama model ID (default: 1d35e3661de3)')
+    parser.add_argument('--ollama-model', type=str, default='llama2',
+                      help='Ollama model name (default: llama2)')
+    parser.add_argument('--num-results', type=int, default=10,
+                      help='Number of search results to return (default: 10)')
     args = parser.parse_args()
 
     try:
@@ -261,7 +305,7 @@ def main():
                 if query.lower() == 'quit':
                     break
                     
-                results = rag.search(query)
+                results = rag.search(query, k=args.num_results)
                 if not results:
                     print("\nNo results found.")
                     continue
