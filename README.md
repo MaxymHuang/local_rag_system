@@ -2,18 +2,18 @@
 
 A powerful file search and summarization system using RAG (Retrieval-Augmented Generation) with a modern web interface, AI-powered chat, and Docker deployment support.
 
-## ✨ Features
+## Features
 
-- 🔍 **Semantic file search** with natural language queries
-- 📝 **AI summarization** using local Ollama models
-- 💬 **Interactive chat interface** with markdown rendering
-- 🎨 **Modern UI** with black/white design and real-time status
-- ⚙️ **Configurable Ollama settings** through web interface
-- 🐳 **Docker deployment** with production-ready setup
-- 👥 **Multi-user support** with thread-safe operations
-- 📄 **Multiple file types**: Text, PDF, Word, PowerPoint
+- **Semantic file search** with natural language queries
+- **AI summarization** using local Ollama models
+- **Interactive chat interface** with markdown rendering
+- **Modern UI** with black/white design and real-time status
+- **Configurable Ollama settings** through web interface
+- **Docker deployment** with production-ready setup
+- **Multi-user support** with thread-safe operations
+- **Multiple file types**: Text, PDF, Word, PowerPoint
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Docker (Recommended)
 ```bash
@@ -38,15 +38,15 @@ ollama pull llama3.1:8b
 python app.py
 ```
 
-## 📖 Usage
+## Usage
 
-1. **Configure Ollama** (⚙️ settings button) - set server URL and model
+1. **Configure Ollama** (settings button) - set server URL and model
 2. **Initialize system** - enter directory path and click "Initialize"
 3. **Search files** - use natural language queries
 4. **Get AI summaries** - click "Summarize" on any result
 5. **Chat with AI** - ask questions in the chat interface
 
-## 🔧 Configuration
+## Configuration
 
 ### Ollama Settings
 - **Default URL**: `http://localhost:11434`
@@ -60,7 +60,7 @@ python app.py
 | `OLLAMA_MODEL` | `llama3.1:8b` | Default model name |
 | `FLASK_ENV` | `production` | Flask environment |
 
-## 🏭 Production Deployment
+## Production Deployment
 
 ```bash
 # Production with resource limits and security
@@ -72,7 +72,7 @@ docker-compose -f docker-compose.prod.yml --profile with-proxy up -d
 
 Features: Resource limits, security hardening, health checks, rate limiting, SSL support.
 
-## 📁 Project Structure
+## Project Structure
 ```
 local_rag_system/
 ├── app.py                    # Flask web server
@@ -85,7 +85,7 @@ local_rag_system/
 └── docker-deployment.md     # Detailed deployment guide
 ```
 
-## 🛠️ API Endpoints
+## API Endpoints
 
 - `GET /` - Web interface
 - `GET /status` - System status
@@ -94,7 +94,7 @@ local_rag_system/
 - `POST /summarize` - AI summary/chat
 - `GET /test-ollama` - Test Ollama connection
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 **Ollama Issues:**
 - Ensure Ollama is running: `ollama serve`
@@ -111,12 +111,12 @@ local_rag_system/
 - Increase Docker resource limits for production
 - Monitor system resources
 
-## 🔒 Security
+## Security
 
 **Development:** Local access, debug mode enabled
 **Production:** Use nginx proxy, SSL, rate limiting, read-only mounts
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -125,17 +125,17 @@ local_rag_system/
 
 Areas for contribution: file format support, AI integration, search algorithms, security enhancements.
 
-## 📞 Support
+## Support
 
 - **Documentation**: [docker-deployment.md](docker-deployment.md) for detailed deployment
 - **Issues**: Check logs and GitHub issues
 - **Author**: [Maxym](https://github.com/MaxymHuang) | [LinkedIn](https://www.linkedin.com/in/maxymhuang/)
 
-## 📄 License
+## License
 
 MIT License - see LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Ollama** - Local LLM infrastructure
 - **Sentence Transformers** - Semantic search
