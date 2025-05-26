@@ -17,13 +17,38 @@ def test_ollama_connection():
     """Test Ollama connection with a simple prompt."""
     try:
         response = ollama.chat(
-            model='hf.co/bartowski/Dolphin3.0-Llama3.2-3B-GGUF:Q4_K_M',
+            model='llama3.1:8b',
             messages=[{
                 'role': 'user',
                 'content': 'hello'
             }]
         )
-        return True, response['message']['content']
+        
+        # Extract content from response - don't assume it's a dictionary
+        try:
+            # First try to get the message attribute/key
+            if hasattr(response, 'message'):
+                msg = response.message
+            elif isinstance(response, dict) and 'message' in response:
+                msg = response['message']
+            else:
+                return False, "No message found in Ollama response"
+            
+            # Now extract content from the message
+            if hasattr(msg, 'content'):
+                content = msg.content
+            elif isinstance(msg, dict) and 'content' in msg:
+                content = msg['content']
+            elif isinstance(msg, str):
+                content = msg
+            else:
+                return False, "Message object missing content attribute"
+                
+            return True, content
+            
+        except Exception as e:
+            return False, f"Failed to extract message from response: {str(e)}"
+            
     except Exception as e:
         return False, str(e)
 
@@ -128,11 +153,75 @@ def summarize():
         
     data = request.json
     file_path = data.get('file_path')
+    message = data.get('message')
     
+    # Handle general chat messages
+    if message and not file_path:
+        try:
+            import ollama
+            response = ollama.chat(
+                model='llama3.1:8b',
+                messages=[{
+                    'role': 'user',
+                    'content': message
+                }]
+            )
+            
+            # Extract content from response - don't assume it's a dictionary
+            summary = None
+            
+            try:
+                # First try to get the message attribute/key
+                if hasattr(response, 'message'):
+                    msg = response.message
+                elif isinstance(response, dict) and 'message' in response:
+                    msg = response['message']
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'No message found in Ollama response'
+                    }), 500
+                
+                # Now extract content from the message
+                if hasattr(msg, 'content'):
+                    summary = msg.content
+                elif isinstance(msg, dict) and 'content' in msg:
+                    summary = msg['content']
+                elif isinstance(msg, str):
+                    summary = msg
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Message object missing content attribute'
+                    }), 500
+                    
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Failed to extract message from response: {str(e)}'
+                }), 500
+                
+            if not summary:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Empty response from Ollama server'
+                }), 500
+                
+            return jsonify({
+                'status': 'success',
+                'summary': summary
+            })
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': f'Error communicating with Ollama: {str(e)}'
+            }), 500
+    
+    # Handle file summarization
     if not file_path:
         return jsonify({
             'status': 'error',
-            'message': 'No file path provided'
+            'message': 'No file path or message provided'
         }), 400
     
     # Normalize and resolve the file path relative to root directory
@@ -196,16 +285,21 @@ def summarize():
             
         try:
             summary = rag.summarize_file(file_path)
+            print(f"Debug: Generated summary: {summary[:100]}...")  # Log first 100 chars of summary
             # Check if the summary is an error message
             if summary.startswith('Error'):
+                print(f"Debug: Summary is an error message: {summary}")
                 return jsonify({
                     'status': 'error',
                     'message': summary
                 }), 500
-            return jsonify({
+            print("Debug: Sending successful response to frontend")
+            response = jsonify({
                 'status': 'success',
                 'summary': summary
             })
+            print(f"Debug: Response content: {response.get_data(as_text=True)[:100]}...")  # Log first 100 chars of response
+            return response
         except Exception as e:
             print(f"Error during summarization: {str(e)}")  # Debug log
             return jsonify({

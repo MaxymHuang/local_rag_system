@@ -5,7 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Finder RAG System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .glass-card-dark {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary {
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+        
+        .btn-secondary {
+            background: black;
+            color: white;
+            border: 1px solid #333;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #333;
+            border-color: #555;
+        }
+        
+        .btn-success {
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-success:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+        
+        .input-modern {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .input-modern:focus {
+            background: rgba(255, 255, 255, 1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+        
         .loading {
             display: none;
             position: fixed;
@@ -13,64 +89,338 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
             z-index: 1000;
         }
+        
         .loading-content {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
             text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
-        .word-count {
-            font-size: 0.875rem;
-            color: #6B7280;
-            margin-top: 0.5rem;
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .chat-message {
+            animation: messageSlide 0.3s ease-out;
+        }
+        
+        @keyframes messageSlide {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .status-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .status-success {
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-error {
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-warning {
+            color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+        
+        .result-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .chat-container {
+            max-height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            max-width: 80%;
+        }
+        
+        .bot-message {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1f2937;
+            margin-right: auto;
+            max-width: 80%;
+        }
+        
+        .error-message {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            margin-right: auto;
+            max-width: 80%;
+        }
+        
+        .header-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-card {
+            transition: all 0.3s ease;
+        }
+        
+        .section-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .help-button {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 200;
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .help-button:hover {
+            background: #f5f5f5;
+            transform: scale(1.05);
+        }
+        
+        .help-bubble {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
+            z-index: 150;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            animation: helpSlideIn 0.3s ease-out;
+        }
+        
+        .help-bubble.show {
+            display: block;
+        }
+        
+        @keyframes helpSlideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-10px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        .help-bubble::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid rgba(255, 255, 255, 0.95);
+        }
+        
+        .help-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #666;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .help-close:hover {
+            background: #f0f0f0;
+            color: #333;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8 text-center">File Finder RAG System</h1>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4 header-title">
+                <i class="fas fa-search mr-4"></i>
+                File Finder RAG System
+            </h1>
+            <p class="text-white text-lg opacity-90">Intelligent file search and summarization powered by AI</p>
+        </div>
+        
+        <!-- System Status Bar -->
+        <div class="glass-card rounded-2xl p-6 mb-8 section-card">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-server text-xl"></i>
+                        <span class="font-medium text-white">System Status:</span>
+                        <div id="systemStatus" class="text-sm"></div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-robot text-xl"></i>
+                        <span class="font-medium text-white">Ollama Status:</span>
+                        <div id="ollamaStatus" class="text-sm"></div>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="testOllama()" 
+                            class="btn-secondary px-4 py-2 rounded-xl font-medium flex items-center space-x-2">
+                        <i class="fas fa-flask"></i>
+                        <span>Test Ollama</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         
         <!-- Initialization Section -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold mb-4">Initialize System</h2>
+        <div class="glass-card rounded-2xl p-8 mb-8 section-card">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-cog text-2xl text-white mr-3"></i>
+                <h2 class="text-2xl font-semibold text-white">Initialize System</h2>
+            </div>
             <div class="flex gap-4">
-                <input type="text" id="rootDir" placeholder="Enter root directory path" 
-                       class="flex-1 p-2 border rounded" value=".">
+                <div class="flex-1">
+                    <input type="text" id="rootDir" placeholder="Enter root directory path" 
+                           class="input-modern w-full p-4 rounded-xl text-gray-800 font-medium" value=".">
+                </div>
                 <button onclick="initializeSystem()" 
-                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Initialize
-                </button>
-                <button onclick="testOllama()" 
-                        class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
-                    Test Ollama
+                        class="btn-primary px-8 py-4 rounded-xl font-medium flex items-center space-x-2">
+                    <i class="fas fa-play"></i>
+                    <span>Initialize</span>
                 </button>
             </div>
-            <div id="systemStatus" class="mt-4 text-sm text-gray-600"></div>
-            <div id="ollamaStatus" class="mt-2 text-sm text-gray-600"></div>
         </div>
 
         <!-- Search Section -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold mb-4">Search Files</h2>
-            <div class="flex flex-col gap-4">
+        <div class="glass-card rounded-2xl p-8 mb-8 section-card">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-search text-2xl text-white mr-3"></i>
+                <h2 class="text-2xl font-semibold text-white">Search Files</h2>
+            </div>
+            <div class="space-y-4">
                 <div class="flex gap-4">
-                    <input type="text" id="searchQuery" placeholder="Enter your search query" 
-                           class="flex-1 p-2 border rounded">
+                    <div class="flex-1">
+                        <input type="text" id="searchQuery" placeholder="Enter your search query" 
+                               class="input-modern w-full p-4 rounded-xl text-gray-800 font-medium">
+                    </div>
                     <button onclick="searchFiles()" 
-                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                        Search
+                            class="btn-success px-8 py-4 rounded-xl font-medium flex items-center space-x-2">
+                        <i class="fas fa-search"></i>
+                        <span>Search</span>
                     </button>
                 </div>
-                <div class="flex items-center gap-2">
-                    <label for="numResults" class="text-sm text-gray-600">Number of results:</label>
-                    <select id="numResults" class="p-2 border rounded">
+                <div class="flex items-center space-x-4">
+                    <label for="numResults" class="text-white font-medium">Results:</label>
+                    <select id="numResults" class="input-modern p-3 rounded-xl text-gray-800 font-medium">
                         <option value="5">5</option>
                         <option value="10" selected>10</option>
                         <option value="15">15</option>
@@ -81,25 +431,99 @@
         </div>
 
         <!-- Results Section -->
-        <div id="results" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
-            <h2 class="text-xl font-semibold mb-4">Search Results</h2>
+        <div id="results" class="glass-card rounded-2xl p-8 mb-8 hidden section-card">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-list text-2xl text-white mr-3"></i>
+                <h2 class="text-2xl font-semibold text-white">Search Results</h2>
+            </div>
             <div id="resultsList" class="space-y-4"></div>
         </div>
 
+        <!-- Chatbox Section -->
+        <div id="chatbox" class="glass-card rounded-2xl p-8 mb-8 hidden section-card">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-comments text-2xl text-white mr-3"></i>
+                <h2 class="text-2xl font-semibold text-white">Chat with Ollama</h2>
+            </div>
+            <div id="chatMessages" class="chat-container rounded-xl p-4 mb-4 overflow-y-auto scrollbar-hide space-y-3"></div>
+            <div class="flex gap-4">
+                <input type="text" id="chatInput" placeholder="Type your message..." 
+                       class="input-modern flex-1 p-4 rounded-xl text-gray-800 font-medium">
+                <button onclick="sendMessage()" 
+                        class="btn-primary px-6 py-4 rounded-xl font-medium flex items-center space-x-2">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Send</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Summary Section -->
-        <div id="summary" class="bg-white rounded-lg shadow-md p-6 hidden">
-            <h2 class="text-xl font-semibold mb-4">File Summary</h2>
-            <div id="summaryContent" class="prose max-w-none"></div>
-            <div id="wordCount" class="word-count"></div>
+        <div id="summary" class="glass-card rounded-2xl p-8 hidden section-card">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-file-alt text-2xl text-white mr-3"></i>
+                <h2 class="text-2xl font-semibold text-white">File Summary</h2>
+            </div>
+            <div id="summaryContent" class="prose max-w-none text-white bg-white bg-opacity-10 p-6 rounded-xl"></div>
+            <div id="wordCount" class="text-white text-sm mt-4 opacity-75"></div>
         </div>
     </div>
 
     <!-- Loading Overlay -->
     <div id="loading" class="loading">
         <div class="loading-content">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p id="loadingText">Processing...</p>
+            <div class="spinner"></div>
+            <p id="loadingText" class="text-gray-700 font-medium">Processing...</p>
         </div>
+    </div>
+
+    <!-- Help Button -->
+    <button class="help-button" onclick="toggleHelp()">
+        <i class="fas fa-question text-lg"></i>
+    </button>
+
+    <!-- Help Bubble -->
+    <div id="helpBubble" class="help-bubble">
+        <button class="help-close" onclick="closeHelp()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="text-gray-800">
+            <h3 class="font-bold text-lg mb-3 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                How to Use
+            </h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex items-start space-x-2">
+                    <span class="font-bold text-blue-500">1.</span>
+                    <span><strong>Initialize:</strong> Enter a directory path and click "Initialize" to scan files</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-bold text-blue-500">2.</span>
+                    <span><strong>Search:</strong> Type keywords to find relevant files in your directory</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-bold text-blue-500">3.</span>
+                    <span><strong>Summarize:</strong> Click "Summarize" on any file to get an AI-generated summary</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-bold text-blue-500">4.</span>
+                    <span><strong>Chat:</strong> Use the chat box to ask questions or get help from Ollama AI</span>
+                </div>
+            </div>
+            <div class="mt-4 p-2 bg-blue-50 rounded-lg">
+                <p class="text-xs text-blue-700">
+                    <i class="fas fa-lightbulb mr-1"></i>
+                    <strong>Tip:</strong> Make sure Ollama is running before using AI features!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+        <button onclick="scrollToTop()" 
+                class="btn-primary p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+            <i class="fas fa-arrow-up text-xl"></i>
+        </button>
     </div>
 
     <script>
@@ -120,6 +544,30 @@
             return text.trim().split(/\s+/).length;
         }
 
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleHelp() {
+            const helpBubble = document.getElementById('helpBubble');
+            helpBubble.classList.toggle('show');
+        }
+
+        function closeHelp() {
+            const helpBubble = document.getElementById('helpBubble');
+            helpBubble.classList.remove('show');
+        }
+
+        // Close help bubble when clicking outside
+        document.addEventListener('click', function(event) {
+            const helpBubble = document.getElementById('helpBubble');
+            const helpButton = document.querySelector('.help-button');
+            
+            if (!helpBubble.contains(event.target) && !helpButton.contains(event.target)) {
+                helpBubble.classList.remove('show');
+            }
+        });
+
         async function testOllama() {
             showLoading('Testing Ollama connection...');
             const ollamaStatus = document.getElementById('ollamaStatus');
@@ -131,32 +579,26 @@
                 if (data.status === 'success') {
                     ollamaTestPassed = true;
                     ollamaStatus.innerHTML = `
-                        <div class="flex items-center text-green-600">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Ollama connection successful
+                        <div class="flex items-center status-success">
+                            <i class="fas fa-check-circle mr-2 status-icon"></i>
+                            <span class="font-medium">Connected</span>
                         </div>
                     `;
                 } else {
                     ollamaTestPassed = false;
                     ollamaStatus.innerHTML = `
-                        <div class="flex items-center text-red-600">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
-                            Ollama connection failed: ${data.message}
+                        <div class="flex items-center status-error">
+                            <i class="fas fa-times-circle mr-2 status-icon"></i>
+                            <span class="font-medium">Failed: ${data.message}</span>
                         </div>
                     `;
                 }
             } catch (error) {
                 ollamaTestPassed = false;
                 ollamaStatus.innerHTML = `
-                    <div class="flex items-center text-red-600">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                        Ollama connection failed: ${error}
+                    <div class="flex items-center status-error">
+                        <i class="fas fa-exclamation-triangle mr-2 status-icon"></i>
+                        <span class="font-medium">Error: ${error}</span>
                     </div>
                 `;
             } finally {
@@ -173,20 +615,16 @@
                 
                 if (data.initialized) {
                     statusDiv.innerHTML = `
-                        <div class="flex items-center text-green-600">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            System initialized with directory: ${data.root_dir}
+                        <div class="flex items-center status-success">
+                            <i class="fas fa-check-circle mr-2 status-icon"></i>
+                            <span class="font-medium">Ready</span>
                         </div>
                     `;
                 } else {
                     statusDiv.innerHTML = `
-                        <div class="flex items-center text-yellow-600">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                            System not initialized. Please initialize to begin searching.
+                        <div class="flex items-center status-warning">
+                            <i class="fas fa-exclamation-triangle mr-2 status-icon pulse"></i>
+                            <span class="font-medium">Not Initialized</span>
                         </div>
                     `;
                 }
@@ -200,6 +638,13 @@
             checkSystemStatus();
             testOllama(); // Test Ollama on page load
             statusCheckInterval = setInterval(checkSystemStatus, 5000); // Check every 5 seconds
+            
+            // Add enter key support for search
+            document.getElementById('searchQuery').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchFiles();
+                }
+            });
         };
 
         // Clean up interval when page unloads
@@ -222,13 +667,14 @@
                 
                 const data = await response.json();
                 if (data.status === 'success') {
-                    alert('System initialized successfully!');
+                    // Show success notification
+                    showNotification('System initialized successfully!', 'success');
                     checkSystemStatus(); // Update status immediately
                 } else {
-                    alert('Error: ' + data.message);
+                    showNotification('Error: ' + data.message, 'error');
                 }
             } catch (error) {
-                alert('Error initializing system: ' + error);
+                showNotification('Error initializing system: ' + error, 'error');
             } finally {
                 hideLoading();
             }
@@ -239,7 +685,7 @@
             const numResults = parseInt(document.getElementById('numResults').value);
             
             if (!query) {
-                alert('Please enter a search query');
+                showNotification('Please enter a search query', 'warning');
                 return;
             }
 
@@ -247,7 +693,7 @@
             const statusResponse = await fetch('/status');
             const statusData = await statusResponse.json();
             if (!statusData.initialized) {
-                alert('Please initialize the system before searching');
+                showNotification('Please initialize the system before searching', 'warning');
                 return;
             }
 
@@ -268,10 +714,10 @@
                     currentResults = data.results;
                     displayResults(data.results);
                 } else {
-                    alert('Error: ' + data.message);
+                    showNotification('Error: ' + data.message, 'error');
                 }
             } catch (error) {
-                alert('Error searching files: ' + error);
+                showNotification('Error searching files: ' + error, 'error');
             } finally {
                 hideLoading();
             }
@@ -284,22 +730,28 @@
             
             results.forEach((result, index) => {
                 const resultDiv = document.createElement('div');
-                resultDiv.className = 'border rounded p-4 hover:bg-gray-50 cursor-pointer';
-                // Escape the file path for HTML and ensure it's properly encoded
+                resultDiv.className = 'result-card glass-card-dark rounded-xl p-6 hover:bg-white hover:bg-opacity-10 cursor-pointer slide-in';
+                resultDiv.style.animationDelay = `${index * 0.1}s`;
+                
                 const escapedPath = encodeURIComponent(result.path);
-                console.log('Original path:', result.path); // Debug log
-                console.log('Escaped path:', escapedPath); // Debug log
                 
                 resultDiv.innerHTML = `
                     <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold">${result.description}</h3>
-                            <p class="text-sm text-gray-600 break-all">${result.path}</p>
-                            <p class="text-sm text-gray-500">Relevance: ${result.relevance_score.toFixed(2)}</p>
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-file text-white mr-2"></i>
+                                <h3 class="font-semibold text-white">${result.description}</h3>
+                            </div>
+                            <p class="text-white text-sm opacity-75 break-all mb-2">${result.path}</p>
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                <span class="text-white text-sm">Relevance: ${result.relevance_score.toFixed(2)}</span>
+                            </div>
                         </div>
                         <button onclick="summarizeFile('${escapedPath}')" 
-                                class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
-                            Summarize
+                                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 ml-4">
+                            <i class="fas fa-magic"></i>
+                            <span>Summarize</span>
                         </button>
                     </div>
                 `;
@@ -307,6 +759,7 @@
             });
             
             resultsDiv.classList.remove('hidden');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
         }
 
         async function summarizeFile(filePath) {
@@ -315,52 +768,225 @@
                 if (shouldTest) {
                     await testOllama();
                     if (!ollamaTestPassed) {
-                        alert('Cannot summarize: Ollama connection failed. Please check your Ollama server.');
+                        showNotification('Cannot summarize: Ollama connection failed. Please check your Ollama server.', 'error');
                         return;
                     }
                 } else {
-                    alert('Cannot summarize: Ollama connection not verified.');
+                    showNotification('Cannot summarize: Ollama connection not verified.', 'warning');
                     return;
                 }
             }
 
             // Decode the file path
             const decodedPath = decodeURIComponent(filePath);
-            console.log('Decoded file path:', decodedPath); // Debug log
+            console.log('Decoded file path:', decodedPath);
             showLoading('Generating summary...');
             
             try {
+                console.log('Sending summarize request to backend...');
                 const response = await fetch('/summarize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file_path: decodedPath })
                 });
                 
+                console.log('Received response from backend:', response.status);
                 const data = await response.json();
-                console.log('Summary response:', data); // Debug log
+                console.log('Parsed response data:', data);
                 
-                if (data.status === 'success') {
-                    const summaryDiv = document.getElementById('summary');
-                    const summaryContent = document.getElementById('summaryContent');
-                    const wordCountDiv = document.getElementById('wordCount');
-                    
-                    summaryContent.textContent = data.summary;
-                    const words = countWords(data.summary);
-                    wordCountDiv.textContent = `Word count: ${words} words`;
-                    
-                    summaryDiv.classList.remove('hidden');
-                    summaryDiv.scrollIntoView({ behavior: 'smooth' });
+                // Show chatbox
+                const chatbox = document.getElementById('chatbox');
+                const chatMessages = document.getElementById('chatMessages');
+                chatbox.classList.remove('hidden');
+                
+                // Add user message
+                const userMessage = document.createElement('div');
+                userMessage.className = 'user-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                userMessage.innerHTML = `
+                    <i class="fas fa-user text-white mt-1"></i>
+                    <div>
+                        <strong class="text-white">You:</strong>
+                        <p class="text-white mt-1">Summarize this file: ${decodedPath}</p>
+                    </div>
+                `;
+                chatMessages.appendChild(userMessage);
+                
+                if (data.status === 'success' && data.summary) {
+                    // Add Ollama response
+                    const ollamaMessage = document.createElement('div');
+                    ollamaMessage.className = 'bot-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                    ollamaMessage.innerHTML = `
+                        <i class="fas fa-robot text-gray-600 mt-1"></i>
+                        <div>
+                            <strong class="text-gray-800">Ollama:</strong>
+                            <div class="text-gray-700 mt-1">${data.summary.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                    chatMessages.appendChild(ollamaMessage);
                 } else {
-                    // Show more detailed error message
-                    alert(`Error: ${data.message}\n\nFile path: ${decodedPath}`);
+                    // Add error message
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'error-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                    errorMessage.innerHTML = `
+                        <i class="fas fa-exclamation-triangle text-white mt-1"></i>
+                        <div>
+                            <strong class="text-white">Error:</strong>
+                            <p class="text-white mt-1">${data.message || 'Unknown error occurred'}</p>
+                        </div>
+                    `;
+                    chatMessages.appendChild(errorMessage);
                 }
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                chatbox.scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
-                console.error('Error during summarization:', error); // Debug log
-                alert(`Error generating summary: ${error}\n\nFile path: ${decodedPath}`);
+                console.error('Error during summarization:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                errorMessage.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-white mt-1"></i>
+                    <div>
+                        <strong class="text-white">Error:</strong>
+                        <p class="text-white mt-1">${error.message || 'Failed to communicate with the server'}</p>
+                    </div>
+                `;
+                document.getElementById('chatMessages').appendChild(errorMessage);
             } finally {
                 hideLoading();
             }
         }
+
+        async function sendMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+            
+            if (!message) return;
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Add user message to chat
+            const chatMessages = document.getElementById('chatMessages');
+            const userMessage = document.createElement('div');
+            userMessage.className = 'user-message p-4 rounded-xl chat-message flex items-start space-x-3';
+            userMessage.innerHTML = `
+                <i class="fas fa-user text-white mt-1"></i>
+                <div>
+                    <strong class="text-white">You:</strong>
+                    <p class="text-white mt-1">${message}</p>
+                </div>
+            `;
+            chatMessages.appendChild(userMessage);
+            
+            showLoading('Getting response...');
+            
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const ollamaMessage = document.createElement('div');
+                    ollamaMessage.className = 'bot-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                    ollamaMessage.innerHTML = `
+                        <i class="fas fa-robot text-gray-600 mt-1"></i>
+                        <div>
+                            <strong class="text-gray-800">Ollama:</strong>
+                            <div class="text-gray-700 mt-1">${data.summary.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                    chatMessages.appendChild(ollamaMessage);
+                } else {
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'error-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                    errorMessage.innerHTML = `
+                        <i class="fas fa-exclamation-triangle text-white mt-1"></i>
+                        <div>
+                            <strong class="text-white">Error:</strong>
+                            <p class="text-white mt-1">${data.message || 'Unknown error occurred'}</p>
+                        </div>
+                    `;
+                    chatMessages.appendChild(errorMessage);
+                }
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message p-4 rounded-xl chat-message flex items-start space-x-3';
+                errorMessage.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-white mt-1"></i>
+                    <div>
+                        <strong class="text-white">Error:</strong>
+                        <p class="text-white mt-1">${error.message || 'Failed to communicate with the server'}</p>
+                    </div>
+                `;
+                chatMessages.appendChild(errorMessage);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg max-w-sm fade-in`;
+            
+            let bgClass, iconClass, icon;
+            switch(type) {
+                case 'success':
+                    bgClass = 'bg-green-500';
+                    iconClass = 'text-white';
+                    icon = 'fas fa-check-circle';
+                    break;
+                case 'error':
+                    bgClass = 'bg-red-500';
+                    iconClass = 'text-white';
+                    icon = 'fas fa-times-circle';
+                    break;
+                case 'warning':
+                    bgClass = 'bg-yellow-500';
+                    iconClass = 'text-white';
+                    icon = 'fas fa-exclamation-triangle';
+                    break;
+                default:
+                    bgClass = 'bg-blue-500';
+                    iconClass = 'text-white';
+                    icon = 'fas fa-info-circle';
+            }
+            
+            notification.className += ` ${bgClass}`;
+            notification.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="${icon} ${iconClass}"></i>
+                    <p class="text-white font-medium">${message}</p>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Add enter key support for chat input
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html> 

@@ -52,7 +52,7 @@ class FileSystemRAG:
         
         # Configure Ollama client
         self.ollama_host = ollama_host
-        self.ollama_model = "hf.co/bartowski/Dolphin3.0-Llama3.2-3B-GGUF:Q4_K_M"  # Changed to standard Ollama model name
+        self.ollama_model = "llama3.1:8b"  # Changed to llama3.1:8b model
         
         # Test Ollama connection
         try:
@@ -179,14 +179,53 @@ Focus on the main content and key points. Keep your summary under 600 words."""
                     }]
                 )
                 print("Debug: Received response from Ollama")
+                print(f"Debug: Response type: {type(response)}")
+                print(f"Debug: Response content: {response}")
                 
-                # Check if response has the expected format
-                if not isinstance(response, dict) or 'message' not in response or 'content' not in response['message']:
-                    print(f"Debug: Unexpected response format: {response}")
-                    return "Error: Unexpected response format from Ollama server"
+                # Handle the Ollama response format - don't assume it's a dictionary
+                summary = None
                 
-                # Get the response content
-                summary = response['message']['content']
+                # Try to extract message regardless of response type
+                try:
+                    # First try to get the message attribute/key
+                    if hasattr(response, 'message'):
+                        message = response.message
+                        print(f"Debug: Found message attribute, type: {type(message)}")
+                    elif isinstance(response, dict) and 'message' in response:
+                        message = response['message']
+                        print(f"Debug: Found message key in dict, type: {type(message)}")
+                    else:
+                        print(f"Debug: No message found in response")
+                        print(f"Debug: Response attributes: {dir(response) if hasattr(response, '__dict__') else 'No attributes'}")
+                        return "Error: No message found in Ollama response"
+                    
+                    print(f"Debug: Message type: {type(message)}")
+                    print(f"Debug: Message content: {message}")
+                    
+                    # Now extract content from the message
+                    if hasattr(message, 'content'):
+                        summary = message.content
+                        print(f"Debug: Successfully extracted content from Message object")
+                    elif isinstance(message, dict) and 'content' in message:
+                        summary = message['content']
+                        print(f"Debug: Successfully extracted content from dictionary")
+                    elif isinstance(message, str):
+                        summary = message
+                        print(f"Debug: Message is already a string")
+                    else:
+                        print(f"Debug: Message object has no 'content' attribute or key")
+                        print(f"Debug: Message attributes: {dir(message) if hasattr(message, '__dict__') else 'No attributes'}")
+                        return "Error: Message object missing content attribute"
+                        
+                except Exception as e:
+                    print(f"Debug: Error extracting message: {str(e)}")
+                    return f"Error: Failed to extract message from response: {str(e)}"
+                
+                if not summary:
+                    print(f"Debug: Summary is empty or None")
+                    return "Error: Empty response from Ollama server"
+                
+                print(f"Debug: Successfully extracted summary: {summary[:100]}...")
                 
                 # Count words and truncate if necessary
                 words = summary.split()
