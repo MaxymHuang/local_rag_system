@@ -38,7 +38,7 @@ from pptx import Presentation
 import requests
 
 class FileSystemRAG:
-    def __init__(self, root_dir: str = ".", ollama_host: str = "http://localhost:11434"):
+    def __init__(self, root_dir: str = ".", ollama_host: str = "http://localhost:11434", ollama_model: str = "llama3.1:8b"):
         self.root_dir = os.path.abspath(root_dir)  # Get absolute path
         # Check if path exists and is accessible
         if not os.path.exists(self.root_dir):
@@ -52,7 +52,7 @@ class FileSystemRAG:
         
         # Configure Ollama client
         self.ollama_host = ollama_host
-        self.ollama_model = "llama3.1:8b"  # Changed to llama3.1:8b model
+        self.ollama_model = ollama_model
         
         # Test Ollama connection
         try:
@@ -117,9 +117,13 @@ class FileSystemRAG:
         except Exception as e:
             return f"Error reading file: {str(e)}"
     
-    def summarize_file(self, file_path: str) -> str:
+    def summarize_file(self, file_path: str, ollama_url: str = None, ollama_model: str = None) -> str:
         """Summarize a file using Ollama."""
         print(f"\nDebug: Attempting to summarize file: {file_path}")
+        
+        # Use provided settings or defaults
+        ollama_url = ollama_url or self.ollama_host
+        ollama_model = ollama_model or self.ollama_model
         
         if not os.path.isfile(file_path):
             print("Debug: Not a valid file")
@@ -127,15 +131,15 @@ class FileSystemRAG:
             
         # Check if Ollama server is available
         try:
-            print(f"Debug: Checking Ollama server at {self.ollama_host}")
-            response = requests.get(f"{self.ollama_host}/api/tags")
+            print(f"Debug: Checking Ollama server at {ollama_url}")
+            response = requests.get(f"{ollama_url}/api/tags")
             if response.status_code != 200:
                 print(f"Debug: Ollama server returned status code {response.status_code}")
                 return f"Error: Ollama server returned status code {response.status_code}. Please ensure Ollama is running."
             print("Debug: Ollama server is available")
         except requests.exceptions.ConnectionError:
             print(f"Debug: Could not connect to Ollama server")
-            return f"Error: Could not connect to Ollama server at {self.ollama_host}. Please ensure Ollama is running."
+            return f"Error: Could not connect to Ollama server at {ollama_url}. Please ensure Ollama is running."
             
         content = self._read_file_contents(file_path)
         print(f"Debug: File content length: {len(content)} characters")
@@ -167,16 +171,17 @@ IMPORTANT: Your response must be 600 words or less.
 
 Focus on the main content and key points. Keep your summary under 600 words."""
             
-            print(f"Debug: Using Ollama model: {self.ollama_model}")
+            print(f"Debug: Using Ollama model: {ollama_model}")
             # Use Ollama to generate a summary
             try:
                 print("Debug: Sending request to Ollama")
                 response = ollama.chat(
-                    model=self.ollama_model,
+                    model=ollama_model,
                     messages=[{
                         'role': 'user',
                         'content': prompt
-                    }]
+                    }],
+                    options={'host': ollama_url}
                 )
                 print("Debug: Received response from Ollama")
                 print(f"Debug: Response type: {type(response)}")
@@ -336,8 +341,8 @@ def main():
                       help='Root directory to search in (default: current directory)')
     parser.add_argument('--ollama-host', type=str, default='http://localhost:11434',
                       help='Ollama server host (default: http://localhost:11434)')
-    parser.add_argument('--ollama-model', type=str, default='llama2',
-                      help='Ollama model name (default: llama2)')
+    parser.add_argument('--ollama-model', type=str, default='llama3.1:8b',
+                      help='Ollama model name (default: llama3.1:8b)')
     parser.add_argument('--num-results', type=int, default=10,
                       help='Number of search results to return (default: 10)')
     args = parser.parse_args()
@@ -345,7 +350,11 @@ def main():
     try:
         # Initialize the RAG system with specified root directory and Ollama host
         print(f"Initializing file finder for directory: {os.path.abspath(args.root_dir)}")
-        rag = FileSystemRAG(root_dir=args.root_dir, ollama_host=args.ollama_host)
+        rag = FileSystemRAG(
+            root_dir=args.root_dir, 
+            ollama_host=args.ollama_host,
+            ollama_model=args.ollama_model
+        )
         
         # Build the index
         print("Building index...")

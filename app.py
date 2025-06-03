@@ -12,16 +12,24 @@ CORS(app)
 rag = None
 rag_lock = Lock()
 current_root_dir = None
+current_ollama_url = 'http://localhost:11434'
+current_ollama_model = 'llama3.1:8b'
 
-def test_ollama_connection():
+def test_ollama_connection(url=None, model=None):
     """Test Ollama connection with a simple prompt."""
     try:
+        # Use provided settings or defaults
+        url = url or current_ollama_url
+        model = model or current_ollama_model
+        
+        # Configure ollama client for this test
         response = ollama.chat(
-            model='llama3.1:8b',
+            model=model,
             messages=[{
                 'role': 'user',
                 'content': 'hello'
-            }]
+            }],
+            options={'host': url}
         )
         
         # Extract content from response - don't assume it's a dictionary
@@ -83,57 +91,16 @@ def test_ollama_custom():
             })
         
         # Test model availability
-        try:
-            import ollama
-            # Temporarily configure ollama client for this test
-            test_response = ollama.chat(
-                model=model,
-                messages=[{
-                    'role': 'user',
-                    'content': 'hello'
-                }],
-                options={'host': url}
-            )
-            
-            # Extract content from response
-            try:
-                if hasattr(test_response, 'message'):
-                    msg = test_response.message
-                elif isinstance(test_response, dict) and 'message' in test_response:
-                    msg = test_response['message']
-                else:
-                    return jsonify({
-                        'status': 'error',
-                        'message': 'No message found in response'
-                    })
-                
-                if hasattr(msg, 'content'):
-                    content = msg.content
-                elif isinstance(msg, dict) and 'content' in msg:
-                    content = msg['content']
-                elif isinstance(msg, str):
-                    content = msg
-                else:
-                    return jsonify({
-                        'status': 'error',
-                        'message': 'Message object missing content'
-                    })
-                    
-                return jsonify({
-                    'status': 'success',
-                    'message': f'Connection successful! Model {model} is working.'
-                })
-                
-            except Exception as e:
-                return jsonify({
-                    'status': 'error',
-                    'message': f'Failed to parse response: {str(e)}'
-                })
-                
-        except Exception as e:
+        success, response = test_ollama_connection(url, model)
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': f'Connection successful! Model {model} is working.'
+            })
+        else:
             return jsonify({
                 'status': 'error',
-                'message': f'Model test failed: {str(e)}'
+                'message': response
             })
             
     except requests.exceptions.ConnectionError:
@@ -163,9 +130,15 @@ def status():
 
 @app.route('/initialize', methods=['POST'])
 def initialize():
-    global rag, current_root_dir
+    global rag, current_root_dir, current_ollama_url, current_ollama_model
     data = request.json
     root_dir = data.get('root_dir', '.')
+    ollama_url = data.get('ollama_url', 'http://localhost:11434')
+    ollama_model = data.get('ollama_model', 'llama3.1:8b')
+    
+    # Update current Ollama settings
+    current_ollama_url = ollama_url
+    current_ollama_model = ollama_model
     
     # Use lock to prevent concurrent initialization
     if not rag_lock.acquire(blocking=False):
@@ -176,7 +149,7 @@ def initialize():
     
     try:
         # Test Ollama connection before initialization
-        success, response = test_ollama_connection()
+        success, response = test_ollama_connection(ollama_url, ollama_model)
         if not success:
             return jsonify({
                 'status': 'error',
@@ -241,17 +214,20 @@ def summarize():
     data = request.json
     file_path = data.get('file_path')
     message = data.get('message')
+    ollama_url = data.get('ollama_url', current_ollama_url)
+    ollama_model = data.get('ollama_model', current_ollama_model)
     
     # Handle general chat messages
     if message and not file_path:
         try:
             import ollama
             response = ollama.chat(
-                model='llama3.1:8b',
+                model=ollama_model,
                 messages=[{
                     'role': 'user',
                     'content': message
-                }]
+                }],
+                options={'host': ollama_url}
             )
             
             # Extract content from response - don't assume it's a dictionary
@@ -363,7 +339,7 @@ def summarize():
             }), 403
     
         # Test Ollama connection before summarization
-        success, response = test_ollama_connection()
+        success, response = test_ollama_connection(ollama_url, ollama_model)
         if not success:
             return jsonify({
                 'status': 'error',
@@ -371,7 +347,7 @@ def summarize():
             }), 500
             
         try:
-            summary = rag.summarize_file(file_path)
+            summary = rag.summarize_file(file_path, ollama_url=ollama_url, ollama_model=ollama_model)
             print(f"Debug: Generated summary: {summary[:100]}...")  # Log first 100 chars of summary
             # Check if the summary is an error message
             if summary.startswith('Error'):

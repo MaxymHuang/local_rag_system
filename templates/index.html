@@ -1019,6 +1019,8 @@
     <script>
         let currentResults = [];
         let statusCheckInterval;
+        let currentOllamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+        let currentOllamaModel = localStorage.getItem('ollamaModel') || 'llama3.1:8b';
         let ollamaTestPassed = false;
 
         function showLoading(message = 'Processing...') {
@@ -1153,6 +1155,7 @@
             const savedModel = localStorage.getItem('ollamaModel') || 'llama3.1:8b';
             const savedEnableSummarize = localStorage.getItem('enableSummarize');
             
+            // Set the input values
             document.getElementById('ollamaUrl').value = savedUrl;
             document.getElementById('ollamaModel').value = savedModel;
             
@@ -1160,8 +1163,23 @@
             const enableSummarize = savedEnableSummarize !== null ? savedEnableSummarize === 'true' : true;
             document.getElementById('enableSummarize').checked = enableSummarize;
             
+            // Update global variables
+            currentOllamaUrl = savedUrl;
+            currentOllamaModel = savedModel;
+            
             // Update UI based on setting
             updateSummarizeUI(enableSummarize);
+            
+            // Update status display
+            const ollamaStatus = document.getElementById('ollamaStatus');
+            if (ollamaStatus) {
+                ollamaStatus.innerHTML = `
+                    <div class="flex items-center status-warning">
+                        <i class="fas fa-exclamation-triangle mr-2 status-icon"></i>
+                        <span class="font-medium">Settings Loaded - Please Test Connection</span>
+                    </div>
+                `;
+            }
         }
 
         function updateSummarizeUI(enabled) {
@@ -1209,16 +1227,14 @@
             localStorage.setItem('ollamaModel', model);
             localStorage.setItem('enableSummarize', enableSummarize);
             
+            // Update global variables
+            currentOllamaUrl = url;
+            currentOllamaModel = model;
+            
             // Update UI based on summarize setting
             updateSummarizeUI(enableSummarize);
             
             showNotification('Settings saved successfully!', 'success');
-            
-            // Update the global variables if they exist
-            if (window.currentOllamaUrl !== undefined) {
-                window.currentOllamaUrl = url;
-                window.currentOllamaModel = model;
-            }
             
             // Reset Ollama test status to force retest with new settings
             ollamaTestPassed = false;
@@ -1323,7 +1339,15 @@
             const ollamaStatus = document.getElementById('ollamaStatus');
             
             try {
-                const response = await fetch('/test-ollama');
+                const response = await fetch('/test-ollama-custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        url: currentOllamaUrl,
+                        model: currentOllamaModel 
+                    })
+                });
+                
                 const data = await response.json();
                 
                 if (data.status === 'success') {
@@ -1331,7 +1355,7 @@
                     ollamaStatus.innerHTML = `
                         <div class="flex items-center status-success">
                             <i class="fas fa-check-circle mr-2 status-icon"></i>
-                            <span class="font-medium">Connected</span>
+                            <span class="font-medium">Connected to ${currentOllamaUrl} (${currentOllamaModel})</span>
                         </div>
                     `;
                 } else {
@@ -1409,15 +1433,34 @@
             showLoading('Initializing system...');
             
             try {
+                // First test Ollama connection with current settings
+                const testResponse = await fetch('/test-ollama-custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        url: currentOllamaUrl,
+                        model: currentOllamaModel 
+                    })
+                });
+                
+                const testData = await testResponse.json();
+                if (testData.status !== 'success') {
+                    showNotification('Error: Ollama connection failed. Please check your settings.', 'error');
+                    return;
+                }
+                
                 const response = await fetch('/initialize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ root_dir: rootDir })
+                    body: JSON.stringify({ 
+                        root_dir: rootDir,
+                        ollama_url: currentOllamaUrl,
+                        ollama_model: currentOllamaModel
+                    })
                 });
                 
                 const data = await response.json();
                 if (data.status === 'success') {
-                    // Show success notification
                     showNotification('System initialized successfully!', 'success');
                     checkSystemStatus(); // Update status immediately
                 } else {
@@ -1548,7 +1591,11 @@
                 const response = await fetch('/summarize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ file_path: decodedPath })
+                    body: JSON.stringify({ 
+                        file_path: decodedPath,
+                        ollama_url: currentOllamaUrl,
+                        ollama_model: currentOllamaModel
+                    })
                 });
                 
                 console.log('Received response from backend:', response.status);
@@ -1647,7 +1694,11 @@
                 const response = await fetch('/summarize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        message: message,
+                        ollama_url: currentOllamaUrl,
+                        ollama_model: currentOllamaModel
+                    })
                 });
                 
                 const data = await response.json();
