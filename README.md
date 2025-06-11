@@ -13,6 +13,27 @@ A powerful file search and summarization system using RAG (Retrieval-Augmented G
 - **Multi-user support** with thread-safe operations
 - **Multiple file types**: Text, PDF, Word, PowerPoint
 
+## How RAG Works
+
+The system uses three key components to enable semantic file search:
+
+1. **Embedding**
+   - Converts text into numerical vectors that capture semantic meaning
+   - Uses language models to transform text into high-dimensional space
+   - Similar meanings are positioned close together in this space
+
+2. **Indexing**
+   - Organizes embeddings in a FAISS (Facebook AI Similarity Search) index
+   - Enables efficient similarity search across large datasets
+   - Maintains a searchable structure of all file descriptions
+
+3. **Inferencing**
+   - Processes user queries to find relevant information
+   - Converts queries into embeddings and searches the index
+   - Returns the most semantically similar files with relevance scores
+
+This architecture enables semantic search, finding relevant files even when exact words don't match, as long as the meaning is similar.
+
 ## Quick Start
 
 ### Docker (Recommended)
