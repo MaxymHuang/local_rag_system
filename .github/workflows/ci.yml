@@ -43,21 +43,9 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Run unit tests
+    - name: Run all tests with coverage
       run: |
-        pytest tests/test_file_finder.py -v --cov=file_finder
-
-    - name: Run Flask app tests
-      run: |
-        pytest tests/test_app.py -v --cov=app
-
-    - name: Run integration tests
-      run: |
-        pytest tests/test_integration.py -v
-
-    - name: Generate coverage report
-      run: |
-        pytest --cov=. --cov-report=xml --cov-report=html
+        pytest -v --cov=. --cov-report=xml --cov-report=html
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -115,10 +103,12 @@ jobs:
         docker run -d --name test-container -p 5000:5000 local-rag-system
         
         # Wait for the container to start
-        sleep 10
-        
-        # Test if the application is responding
-        curl -f http://localhost:5000/status || exit 1
+        for i in {1..10}; do
+          if curl -f http://localhost:5000/status; then
+            break
+          fi
+          sleep 2
+        done
         
         # Clean up
         docker stop test-container
