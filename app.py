@@ -135,6 +135,7 @@ def initialize():
     root_dir = data.get('root_dir', '.')
     ollama_url = data.get('ollama_url', 'http://localhost:11434')
     ollama_model = data.get('ollama_model', 'llama3.1:8b')
+    enable_ai_summary = data.get('enable_ai_summary', True)  # Default to True for backward compatibility
     
     # Update current Ollama settings
     current_ollama_url = ollama_url
@@ -148,13 +149,14 @@ def initialize():
         }), 409
     
     try:
-        # Test Ollama connection before initialization
-        success, response = test_ollama_connection(ollama_url, ollama_model)
-        if not success:
-            return jsonify({
-                'status': 'error',
-                'message': f'Ollama test failed: {response}'
-            }), 500
+        # Only test Ollama connection if AI summary is enabled
+        if enable_ai_summary:
+            success, response = test_ollama_connection(ollama_url, ollama_model)
+            if not success:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Ollama test failed: {response}'
+                }), 500
 
         rag = FileSystemRAG(root_dir=root_dir)
         rag.build_index()

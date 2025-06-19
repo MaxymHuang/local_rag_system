@@ -1410,7 +1410,6 @@
         // Start checking status when page loads
         window.onload = function() {
             checkSystemStatus();
-            testOllama(); // Test Ollama on page load
             statusCheckInterval = setInterval(checkSystemStatus, 5000); // Check every 5 seconds
             
             // Add enter key support for search
@@ -1433,20 +1432,25 @@
             showLoading('Initializing system...');
             
             try {
-                // First test Ollama connection with current settings
-                const testResponse = await fetch('/test-ollama-custom', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        url: currentOllamaUrl,
-                        model: currentOllamaModel 
-                    })
-                });
+                // Check if AI summary is enabled
+                const enableSummarize = localStorage.getItem('enableSummarize') !== 'false';
                 
-                const testData = await testResponse.json();
-                if (testData.status !== 'success') {
-                    showNotification('Error: Ollama connection failed. Please check your settings.', 'error');
-                    return;
+                // Only test Ollama connection if AI summary is enabled
+                if (enableSummarize) {
+                    const testResponse = await fetch('/test-ollama-custom', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            url: currentOllamaUrl,
+                            model: currentOllamaModel 
+                        })
+                    });
+                    
+                    const testData = await testResponse.json();
+                    if (testData.status !== 'success') {
+                        showNotification('Error: Ollama connection failed. Please check your settings or disable AI summary features.', 'error');
+                        return;
+                    }
                 }
                 
                 const response = await fetch('/initialize', {
@@ -1455,7 +1459,8 @@
                     body: JSON.stringify({ 
                         root_dir: rootDir,
                         ollama_url: currentOllamaUrl,
-                        ollama_model: currentOllamaModel
+                        ollama_model: currentOllamaModel,
+                        enable_ai_summary: enableSummarize
                     })
                 });
                 
