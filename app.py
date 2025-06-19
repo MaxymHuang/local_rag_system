@@ -15,6 +15,34 @@ current_root_dir = None
 current_ollama_url = 'http://localhost:11434'
 current_ollama_model = 'llama3.1:8b'
 
+# Available sentence transformer models
+available_sentence_models = [
+    {
+        'name': 'paraphrase-MiniLM-L3-v2',
+        'display_name': 'Ultra-Fast (L3)',
+        'description': 'Smallest and fastest model (61MB). Perfect for laptops with limited resources.',
+        'size': '61MB',
+        'speed': '⚡⚡⚡',
+        'quality': '⭐⭐'
+    },
+    {
+        'name': 'all-MiniLM-L6-v2',
+        'display_name': 'Balanced (L6)',
+        'description': 'Good balance of speed and quality (90MB). Recommended for most users.',
+        'size': '90MB',
+        'speed': '⚡⚡',
+        'quality': '⭐⭐⭐'
+    },
+    {
+        'name': 'all-MiniLM-L12-v2',
+        'display_name': 'High Quality (L12)',
+        'description': 'Better quality with slightly larger size (120MB). For better search accuracy.',
+        'size': '120MB',
+        'speed': '⚡',
+        'quality': '⭐⭐⭐⭐'
+    }
+]
+
 def test_ollama_connection(url=None, model=None):
     """Test Ollama connection with a simple prompt."""
     try:
@@ -63,6 +91,14 @@ def test_ollama_connection(url=None, model=None):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/sentence-models', methods=['GET'])
+def get_sentence_models():
+    """Get available sentence transformer models."""
+    return jsonify({
+        'status': 'success',
+        'models': available_sentence_models
+    })
 
 @app.route('/test-ollama', methods=['GET'])
 def test_ollama():
@@ -135,7 +171,8 @@ def initialize():
     root_dir = data.get('root_dir', '.')
     ollama_url = data.get('ollama_url', 'http://localhost:11434')
     ollama_model = data.get('ollama_model', 'llama3.1:8b')
-    enable_ai_summary = data.get('enable_ai_summary', True)  # Default to True for backward compatibility
+    enable_ai_summary = data.get('enable_ai_summary', True)
+    sentence_model = data.get('sentence_model', 'all-MiniLM-L6-v2')
     
     # Update current Ollama settings
     current_ollama_url = ollama_url
@@ -158,12 +195,12 @@ def initialize():
                     'message': f'Ollama test failed: {response}'
                 }), 500
 
-        rag = FileSystemRAG(root_dir=root_dir)
+        rag = FileSystemRAG(root_dir=root_dir, sentence_model=sentence_model)
         rag.build_index()
         current_root_dir = os.path.abspath(root_dir)
         return jsonify({
             'status': 'success',
-            'message': f'Successfully initialized with directory: {current_root_dir}'
+            'message': f'Successfully initialized with directory: {current_root_dir} using model: {sentence_model}'
         })
     except Exception as e:
         rag = None

@@ -691,6 +691,22 @@
                 <i class="fas fa-cog text-2xl text-white mr-3"></i>
                 <h2 class="text-2xl font-semibold text-white">Initialize System</h2>
             </div>
+            
+            <!-- Model Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-white mb-3">
+                    <i class="fas fa-brain mr-2"></i>
+                    Select Sentence Transformer Model
+                </label>
+                <div id="modelSelection" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Models will be loaded here -->
+                </div>
+                <div id="selectedModelInfo" class="mt-3 text-sm text-white opacity-75">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Selected: <span id="currentModelName">all-MiniLM-L6-v2</span>
+                </div>
+            </div>
+            
             <div class="flex gap-4">
                 <div class="flex-1">
                     <input type="text" id="rootDir" placeholder="Enter root directory path" 
@@ -1022,6 +1038,7 @@
         let currentOllamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
         let currentOllamaModel = localStorage.getItem('ollamaModel') || 'llama3.1:8b';
         let ollamaTestPassed = false;
+        let selectedSentenceModel = 'all-MiniLM-L6-v2'; // Default model
 
         function showLoading(message = 'Processing...') {
             document.getElementById('loadingText').textContent = message;
@@ -1410,6 +1427,7 @@
         // Start checking status when page loads
         window.onload = function() {
             checkSystemStatus();
+            loadSentenceModels(); // Load sentence transformer models
             statusCheckInterval = setInterval(checkSystemStatus, 5000); // Check every 5 seconds
             
             // Add enter key support for search
@@ -1460,7 +1478,8 @@
                         root_dir: rootDir,
                         ollama_url: currentOllamaUrl,
                         ollama_model: currentOllamaModel,
-                        enable_ai_summary: enableSummarize
+                        enable_ai_summary: enableSummarize,
+                        sentence_model: selectedSentenceModel
                     })
                 });
                 
@@ -1809,6 +1828,93 @@
             // Load settings on page load
             loadCurrentSettings();
         });
+
+        async function loadSentenceModels() {
+            try {
+                console.log('Loading sentence models...');
+                const response = await fetch('/sentence-models');
+                const data = await response.json();
+                
+                console.log('Response from /sentence-models:', data);
+                
+                if (data.status === 'success') {
+                    console.log('Models loaded successfully:', data.models);
+                    displayModelOptions(data.models);
+                } else {
+                    console.error('Error loading models:', data.message);
+                    showNotification('Error loading models: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+                showNotification('Error loading models: ' + error, 'error');
+            }
+        }
+
+        function displayModelOptions(models) {
+            console.log('Displaying model options:', models);
+            const container = document.getElementById('modelSelection');
+            console.log('Model selection container:', container);
+            
+            if (!container) {
+                console.error('Model selection container not found!');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            models.forEach(model => {
+                console.log('Creating card for model:', model);
+                const modelCard = document.createElement('div');
+                modelCard.className = 'model-card glass-card-dark rounded-xl p-4 cursor-pointer transition-all duration-200 hover:bg-white hover:bg-opacity-10 border-2 border-transparent';
+                modelCard.onclick = () => selectModel(model.name, modelCard);
+                
+                // Check if this is the default selected model
+                if (model.name === selectedSentenceModel) {
+                    modelCard.classList.add('border-blue-400');
+                }
+                
+                modelCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-white">${model.display_name}</h3>
+                        <div class="text-xs text-white opacity-75">${model.size}</div>
+                    </div>
+                    <p class="text-sm text-white opacity-75 mb-3">${model.description}</p>
+                    <div class="flex justify-between text-xs mb-2">
+                        <span class="text-white">Speed: ${model.speed}</span>
+                        <span class="text-white">Quality: ${model.quality}</span>
+                    </div>
+                    <div class="text-xs text-blue-300 opacity-75">
+                        <i class="fas fa-mouse-pointer mr-1"></i>Click to select
+                    </div>
+                `;
+                
+                container.appendChild(modelCard);
+                console.log('Added model card to container');
+            });
+            
+            console.log('Finished displaying model options');
+        }
+
+        function selectModel(modelName, cardElement) {
+            console.log('Selecting model:', modelName);
+            selectedSentenceModel = modelName;
+            
+            // Update visual selection
+            const allCards = document.querySelectorAll('.model-card');
+            allCards.forEach(card => {
+                card.classList.remove('border-blue-400');
+            });
+            cardElement.classList.add('border-blue-400');
+            
+            // Update the selected model display
+            const currentModelName = document.getElementById('currentModelName');
+            if (currentModelName) {
+                currentModelName.textContent = modelName;
+            }
+            
+            // Show notification
+            showNotification(`Selected model: ${modelName}`, 'success');
+        }
     </script>
 </body>
 </html> 

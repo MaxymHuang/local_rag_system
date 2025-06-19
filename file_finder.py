@@ -38,7 +38,8 @@ from pptx import Presentation
 import requests
 
 class FileSystemRAG:
-    def __init__(self, root_dir: str = ".", ollama_host: str = "http://localhost:11434", ollama_model: str = "llama3.1:8b"):
+    def __init__(self, root_dir: str = ".", ollama_host: str = "http://localhost:11434", 
+                 ollama_model: str = "llama3.1:8b", sentence_model: str = "all-MiniLM-L6-v2"):
         self.root_dir = os.path.abspath(root_dir)  # Get absolute path
         # Check if path exists and is accessible
         if not os.path.exists(self.root_dir):
@@ -46,7 +47,9 @@ class FileSystemRAG:
         if not os.access(self.root_dir, os.R_OK):
             raise ValueError(f"No read access to directory: {self.root_dir}")
             
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        # Store the model name but don't load it yet (lazy loading)
+        self.sentence_model_name = sentence_model
+        self.model = None  # Will be loaded when needed
         self.index = None
         self.file_paths = []
         
@@ -63,6 +66,13 @@ class FileSystemRAG:
         except requests.exceptions.ConnectionError:
             raise ConnectionError(f"Could not connect to Ollama server at {ollama_host}. Make sure Ollama is running.")
         
+    def _load_model_if_needed(self):
+        """Load the sentence transformer model only when needed."""
+        if self.model is None:
+            print(f"Loading sentence transformer model: {self.sentence_model_name}")
+            self.model = SentenceTransformer(self.sentence_model_name)
+            print("Model loaded successfully!")
+    
     def _get_file_description(self, file_path: str) -> str:
         """Generate a description for a file or directory."""
         path = Path(file_path)
@@ -252,6 +262,9 @@ Focus on the main content and key points. Keep your summary under 600 words."""
     
     def build_index(self):
         """Build the FAISS index from the file system."""
+        # Load model only when building index
+        self._load_model_if_needed()
+        
         # Collect all files and directories
         self.file_paths = []
         start_time = time.time()
@@ -315,6 +328,9 @@ Focus on the main content and key points. Keep your summary under 600 words."""
         """Search for files/directories based on natural language query."""
         if self.index is None:
             raise ValueError("Index not built. Call build_index() first.")
+        
+        # Load model if not already loaded (should be loaded by now, but just in case)
+        self._load_model_if_needed()
         
         # Encode query
         query_embedding = self.model.encode([query])
