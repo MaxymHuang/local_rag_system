@@ -57,15 +57,6 @@ class FileSystemRAG:
         self.ollama_host = ollama_host
         self.ollama_model = ollama_model
         
-        # Test Ollama connection
-        try:
-            response = requests.get(f"{ollama_host}/api/tags")
-            if response.status_code != 200:
-                raise ConnectionError(f"Ollama server returned status code {response.status_code}")
-            print("Successfully connected to Ollama server")
-        except requests.exceptions.ConnectionError:
-            raise ConnectionError(f"Could not connect to Ollama server at {ollama_host}. Make sure Ollama is running.")
-        
     def _load_model_if_needed(self):
         """Load the sentence transformer model only when needed."""
         if self.model is None:
